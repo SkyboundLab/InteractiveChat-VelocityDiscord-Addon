@@ -27,7 +27,6 @@ import com.loohp.interactivechat.libs.net.kyori.adventure.text.format.TextColor;
 import com.loohp.interactivechat.libs.net.kyori.adventure.text.object.PlayerHeadObjectContents;
 import com.loohp.interactivechat.libs.org.apache.commons.lang3.math.Fraction;
 import com.loohp.interactivechat.objectholders.ICMaterial;
-import com.loohp.interactivechatdiscordsrvaddon.objectholders.AdvancementData;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.AttributeBase;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.BiomePrecipitation;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.CustomModelData;
@@ -135,17 +134,11 @@ public abstract class NMSAddonWrapper {
 
     public abstract TextColor getTrimMaterialColor(Object trimMaterial);
 
-    public abstract AdvancementData getAdvancementDataFromBukkitAdvancement(Object bukkitAdvancement);
-
-    public abstract Object getBukkitAdvancementFromEvent(Event event);
-
     public abstract boolean matchArmorSlot(ItemStack armorItem, EquipmentSlot slot);
 
     public abstract Key getArmorMaterialKey(ItemStack armorItem);
 
     public abstract Map<EquipmentSlotGroup, ? extends Multimap<AttributeBase, ?>> getItemAttributeModifiers(ItemStack itemStack);
-
-    public abstract Component getDeathMessage(Player player);
 
     public abstract Key getDecoratedPotSherdPatternName(ItemStack itemStack);
 

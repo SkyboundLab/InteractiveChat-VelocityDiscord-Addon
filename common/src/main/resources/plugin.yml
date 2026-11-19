@@ -1,13 +1,13 @@
-name: InteractiveChatDiscordSrvAddon
+name: InteractiveChatVelocityDiscordAddon
 author: loohp
 version: ${project.version}
 main: com.loohp.interactivechatdiscordsrvaddon.InteractiveChatDiscordSrvAddon
 api-version: 1.13
 folia-supported: true
-description: DiscordSRV addon to InteractiveChat
+description: InteractiveChat addon for VelocityDiscord
 depend: [InteractiveChat, DiscordSRV]
 softdepend: [ItemsAdder, ImageFrame, CraftEngine]
-prefix: InteractiveChatDiscordSRVAddon
+prefix: InteractiveChatVelocityDiscordAddon
 
 commands:
   interactivechatdiscordsrv:

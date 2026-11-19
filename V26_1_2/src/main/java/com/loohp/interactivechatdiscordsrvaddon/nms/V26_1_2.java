@@ -37,8 +37,6 @@ import com.loohp.interactivechat.objectholders.ICMaterial;
 import com.loohp.interactivechat.utils.InteractiveChatComponentSerializer;
 import com.loohp.interactivechat.utils.NativeJsonConverter;
 import com.loohp.interactivechat.utils.ReflectionUtils;
-import com.loohp.interactivechatdiscordsrvaddon.objectholders.AdvancementData;
-import com.loohp.interactivechatdiscordsrvaddon.objectholders.AdvancementType;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.AttributeBase;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.BiomePrecipitation;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.CustomModelData;
@@ -417,27 +415,6 @@ public class V26_1_2 extends NMSAddonWrapper {
     }
 
     @Override
-    public AdvancementData getAdvancementDataFromBukkitAdvancement(Object bukkitAdvancement) {
-        AdvancementHolder holder = ((CraftAdvancement) bukkitAdvancement).getHandle();
-        Optional<DisplayInfo> optAdvancementDisplay = holder.value().display();
-        if (!optAdvancementDisplay.isPresent()) {
-            return null;
-        }
-        DisplayInfo display = optAdvancementDisplay.get();
-        Component title = InteractiveChatComponentSerializer.gson().deserialize(CraftChatMessage.toJSON(display.getTitle()));
-        Component description = InteractiveChatComponentSerializer.gson().deserialize(CraftChatMessage.toJSON(display.getDescription()));
-        ItemStack item = CraftItemStack.asBukkitCopy(display.getIcon().create());
-        AdvancementType advancementType = AdvancementType.fromName(display.getType().getSerializedName());
-        boolean isMinecraft = holder.id().getNamespace().equals(Key.MINECRAFT_NAMESPACE);
-        return new AdvancementData(title, description, item, advancementType, isMinecraft);
-    }
-
-    @Override
-    public Advancement getBukkitAdvancementFromEvent(Event event) {
-        return ((PlayerAdvancementDoneEvent) event).getAdvancement();
-    }
-
-    @Override
     public boolean matchArmorSlot(ItemStack armorItem, EquipmentSlot slot) {
         net.minecraft.world.item.ItemStack nmsItemStack = CraftItemStack.asNMSCopy(armorItem);
         Equippable equippable = nmsItemStack.get(DataComponents.EQUIPPABLE);
@@ -484,13 +461,6 @@ public class V26_1_2 extends NMSAddonWrapper {
             });
         }
         return result;
-    }
-
-    @Override
-    public Component getDeathMessage(Player player) {
-        ServerPlayer entityPlayer = ((CraftPlayer) player).getHandle();
-        CombatTracker combatTracker = entityPlayer.getCombatTracker();
-        return InteractiveChatComponentSerializer.gson().deserialize(CraftChatMessage.toJSON(combatTracker.getDeathMessage()));
     }
 
     @SuppressWarnings("PatternValidation")

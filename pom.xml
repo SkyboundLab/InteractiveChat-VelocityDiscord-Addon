@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ This file is part of InteractiveChatDiscordSrvAddon2.
+  ~ This file is part of InteractiveChatVelocityDiscordAddon2.
   ~
   ~ Copyright (C) 2020 - 2025. LoohpJames <jamesloohp@gmail.com>
   ~ Copyright (C) 2020 - 2025. Contributors
@@ -19,19 +19,36 @@
   ~ along with this program. If not, see <https://www.gnu.org/licenses/>.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.loohp</groupId>
-    <artifactId>InteractiveChatDiscordSrvAddon-Parent</artifactId>
+    <artifactId>InteractiveChatVelocityDiscordAddon-Parent</artifactId>
     <version>2026.1.3.0</version>
     <packaging>pom</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>loohp-repo</id>
+            <url>https://repo.loohpjames.com/repository</url>
+        </repository>
+        <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>papermc-repo</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <modules>
         <module>abstraction</module>
@@ -80,4 +97,5 @@
         <module>V26_3</module>
         <module>common</module>
     </modules>
+
 </project>

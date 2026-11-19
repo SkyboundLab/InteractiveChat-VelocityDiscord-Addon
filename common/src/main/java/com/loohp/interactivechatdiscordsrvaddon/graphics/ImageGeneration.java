@@ -51,7 +51,6 @@ import com.loohp.interactivechat.utils.SkinUtils;
 import com.loohp.interactivechatdiscordsrvaddon.InteractiveChatDiscordSrvAddon;
 import com.loohp.interactivechatdiscordsrvaddon.debug.Debug;
 import com.loohp.interactivechatdiscordsrvaddon.nms.NMSAddon;
-import com.loohp.interactivechatdiscordsrvaddon.objectholders.AdvancementType;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.CustomModelData;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.PaintingVariant;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.SteppedIntegerRange;
@@ -148,11 +147,6 @@ public class ImageGeneration {
     public static final String PLAYER_SKIN_CACHE_KEY = "PlayerSkinTexture";
     public static final String INVENTORY_CACHE_KEY = "Inventory";
     public static final String PLAYER_INVENTORY_CACHE_KEY = "PlayerInventory";
-    public static final int TABLIST_SINGLE_COLUMN_LIMIT = 20;
-    public static final int TABLIST_PLAYER_DISPLAY_LIMIT = 80;
-    public static final int TABLIST_INTERNAL_HEIGHT = 146;
-    public static final Color TABLIST_BACKGROUND = new Color(68, 68, 68);
-    public static final Color TABLIST_PLAYER_BACKGROUND = new Color(107, 107, 107);
     public static final TextColor INVENTORY_DEFAULT_FONT_COLOR = TextColor.color(4210752);
     public static final int BOOK_LINE_LIMIT = 230;
     public static final int BOOK_MAX_LINES = 14;
@@ -223,15 +217,6 @@ public class ImageGeneration {
 
     public static List<ValuePairs<TextureResource, OpenGLBlending>> getDefaultEnchantmentTint(EnchantmentGlintType type) {
         return Collections.singletonList(new ValuePairs<>(resourceManager.get().getTextureManager().getTexture(type.getResourceLocation()), OpenGLBlending.GLINT));
-    }
-
-    public static BufferedImage getAdvancementIcon(ItemStack item, AdvancementType advancementType, boolean completed, OfflineICPlayer player) throws IOException {
-        BufferedImage frame = ImageUtils.resizeImageAbs(getAdvancementFrame(advancementType, completed), 52, 52);
-        BufferedImage itemImage = getSingleRawItemImage(item, player);
-        Graphics2D g = frame.createGraphics();
-        g.drawImage(itemImage, 10, 10, null);
-        g.dispose();
-        return frame;
     }
 
     public static BufferedImage getItemStackImage(ItemStack item, OfflineICPlayer player) throws IOException {
@@ -1203,223 +1188,6 @@ public class ImageGeneration {
         return output;
     }
 
-    public static BufferedImage getTabListImage(List<Component> header, List<Component> footer, List<ValueTrios<OfflineICPlayer, Component, Integer>> players, boolean showAvatar, boolean showPing) {
-        return getTabListImage(header, footer, players, showAvatar, showPing, TABLIST_PLAYER_DISPLAY_LIMIT);
-    }
-
-    public static BufferedImage getTabListImage(List<Component> header, List<Component> footer, List<ValueTrios<OfflineICPlayer, Component, Integer>> players, boolean showAvatar, boolean showPing, int maxPlayerDisplayed) {
-        players = players.subList(0, Math.min(players.size(), maxPlayerDisplayed));
-        List<ValueTrios<BufferedImage, Integer, Color>> playerImages = new ArrayList<>(players.size());
-        int masterOffsetX = 0;
-        for (ValueTrios<OfflineICPlayer, Component, Integer> trio : players) {
-            OfflineICPlayer player = trio.getFirst();
-            UUID uuid = player.getUniqueId();
-            Component name = trio.getSecond();
-            int ping = trio.getThird();
-            BufferedImage image = new BufferedImage(2048, TABLIST_INTERNAL_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = image.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            int offsetX = 0;
-            if (showAvatar) {
-                BufferedImage skin;
-                try {
-                    Player onlinePlayer = Bukkit.getPlayer(uuid);
-                    if (onlinePlayer == null) {
-                        CacheObject<?> cache = resourceManager.get().getResourceRegistry(ICacheManager.IDENTIFIER, ICacheManager.class).getCache(uuid + "null" + PLAYER_SKIN_CACHE_KEY);
-                        if (cache == null) {
-                            String value = SkinUtils.getSkinURLFromUUID(uuid);
-                            skin = ImageUtils.downloadImage(value);
-                            resourceManager.get().getResourceRegistry(ICacheManager.IDENTIFIER, ICacheManager.class).putCache(uuid + "null" + PLAYER_SKIN_CACHE_KEY, skin);
-                            skin = ImageUtils.copyImage(skin);
-                        } else {
-                            skin = ImageUtils.copyImage((BufferedImage) cache.getObject());
-                        }
-                    } else {
-                        try {
-                            JSONObject json = (JSONObject) new JSONParser().parse(SkinUtils.getSkinJsonFromProfile(onlinePlayer));
-                            String value = (String) ((JSONObject) ((JSONObject) json.get("textures")).get("SKIN")).get("url");
-                            CacheObject<?> cache = resourceManager.get().getResourceRegistry(ICacheManager.IDENTIFIER, ICacheManager.class).getCache(uuid + value + PLAYER_SKIN_CACHE_KEY);
-                            if (cache == null) {
-                                skin = ImageUtils.downloadImage(value);
-                                resourceManager.get().getResourceRegistry(ICacheManager.IDENTIFIER, ICacheManager.class).putCache(uuid + value + PLAYER_SKIN_CACHE_KEY, skin);
-                            } else {
-                                skin = (BufferedImage) cache.getObject();
-                            }
-                            skin = ImageUtils.copyImage(skin);
-                        } catch (Exception e) {
-                            String value = SkinUtils.getSkinURLFromUUID(uuid);
-                            skin = ImageUtils.downloadImage(value);
-                        }
-                    }
-                } catch (Exception e) {
-                    skin = resourceManager.get().getTextureManager().getTexture(ResourceRegistry.DEFAULT_WIDE_SKIN_LOCATION).getTexture(64, 64);
-                }
-                BufferedImage avatar = ImageUtils.copyAndGetSubImage(skin, 8, 8, 8, 8);
-                BufferedImage avatarOverlay = ImageUtils.copyAndGetSubImage(skin, 40, 8, 8, 8);
-                if (ModelUtils.isRenderedUpsideDown(name)) {
-                    avatar = ImageUtils.rotateImageByDegrees(avatar, 180);
-                    avatarOverlay = ImageUtils.rotateImageByDegrees(avatarOverlay, 180);
-                }
-                g.drawImage(avatar, offsetX, (TABLIST_INTERNAL_HEIGHT - 18) / 2, 16, 16, null);
-                g.drawImage(avatarOverlay, offsetX, (TABLIST_INTERNAL_HEIGHT - 18) / 2, 16, 16, null);
-                offsetX += 18;
-            } else {
-                offsetX += 2;
-            }
-            g.dispose();
-            ImageUtils.printComponent(resourceManager.get(), image, name, InteractiveChatDiscordSrvAddon.plugin.language, version.get().isLegacyRGB(), offsetX, (TABLIST_INTERNAL_HEIGHT - 18) / 2 - 1, 16);
-            int lastX = InteractiveChatDiscordSrvAddon.plugin.playerlistCommandMinWidth;
-            for (int x = InteractiveChatDiscordSrvAddon.plugin.playerlistCommandMinWidth; x < image.getWidth(); x++) {
-                for (int y = 0; y < image.getHeight(); y++) {
-                    if (image.getRGB(x, y) != 0) {
-                        lastX = x;
-                        break;
-                    }
-                }
-            }
-            if (lastX > masterOffsetX) {
-                masterOffsetX = lastX;
-            }
-            Color color = null;
-            Object hex = player.getProperties().get("tab_background_color");
-            if (hex instanceof String) {
-                try {
-                    color = Color.decode((String) hex);
-                } catch (NumberFormatException ignore) {
-                }
-            }
-            playerImages.add(new ValueTrios<>(image, ping, color));
-        }
-        List<BufferedImage> playerRows = new ArrayList<>(playerImages.size());
-        if (showPing) {
-            masterOffsetX += 26;
-        } else {
-            masterOffsetX += 2;
-        }
-        for (ValueTrios<BufferedImage, Integer, Color> trio : playerImages) {
-            BufferedImage image = trio.getFirst();
-            if (showPing) {
-                BufferedImage ping = getPingIcon(trio.getSecond(), false);
-                Graphics2D g = image.createGraphics();
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                g.drawImage(ImageUtils.resizeImageAbs(ping, 20, 16), masterOffsetX - 22, (TABLIST_INTERNAL_HEIGHT - 18) / 2, null);
-                g.dispose();
-            }
-            BufferedImage cropped = new BufferedImage(masterOffsetX, TABLIST_INTERNAL_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = cropped.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            if (trio.getThird() == null) {
-                g.setColor(TABLIST_PLAYER_BACKGROUND);
-            } else {
-                g.setColor(trio.getThird());
-            }
-            g.fillRect(0, (TABLIST_INTERNAL_HEIGHT - 18) / 2, cropped.getWidth(), 16);
-            g.drawImage(image, 0, 0, null);
-            g.dispose();
-            playerRows.add(cropped);
-        }
-        Map<BufferedImage, Integer> headerLines = new LinkedHashMap<>(header.size());
-        for (Component line : header) {
-            BufferedImage image = new BufferedImage(2048, TABLIST_INTERNAL_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-            ImageUtils.printComponent(resourceManager.get(), image, line, InteractiveChatDiscordSrvAddon.plugin.language, version.get().isLegacyRGB(), 0, (TABLIST_INTERNAL_HEIGHT - 18) / 2 - 1, 16);
-            int lastX = 0;
-            for (int x = 0; x < image.getWidth(); x++) {
-                for (int y = 0; y < image.getHeight(); y++) {
-                    if (image.getRGB(x, y) != 0) {
-                        lastX = x;
-                        break;
-                    }
-                }
-            }
-            BufferedImage cropped = new BufferedImage(Math.max(1, lastX), TABLIST_INTERNAL_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = cropped.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(image, 0, 0, null);
-            g.dispose();
-            headerLines.put(cropped, lastX);
-        }
-        Map<BufferedImage, Integer> footerLines = new LinkedHashMap<>(footer.size());
-        for (Component line : footer) {
-            BufferedImage image = new BufferedImage(2048, TABLIST_INTERNAL_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-            ImageUtils.printComponent(resourceManager.get(), image, line, InteractiveChatDiscordSrvAddon.plugin.language, version.get().isLegacyRGB(), 0, (TABLIST_INTERNAL_HEIGHT - 18) / 2 - 1, 16);
-            int lastX = 0;
-            for (int x = 0; x < image.getWidth(); x++) {
-                for (int y = 0; y < image.getHeight(); y++) {
-                    if (image.getRGB(x, y) != 0) {
-                        lastX = x;
-                        break;
-                    }
-                }
-            }
-            BufferedImage cropped = new BufferedImage(Math.max(1, lastX), TABLIST_INTERNAL_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = cropped.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(image, 0, 0, null);
-            g.dispose();
-            footerLines.put(cropped, lastX);
-        }
-        int columnCount = ((playerRows.size() - 1) / TABLIST_SINGLE_COLUMN_LIMIT) + 1;
-        int playersPerColumn = (int) Math.ceil((double) playerRows.size() / (double) columnCount);
-
-        BufferedImage image = new BufferedImage(((masterOffsetX + 2) * columnCount) + 2, playersPerColumn * 18 + 2, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g.setColor(TABLIST_BACKGROUND);
-        g.fillRect(0, 0, image.getWidth(), image.getHeight());
-        int baseOffsetY = -((TABLIST_INTERNAL_HEIGHT - 18) / 2 - 2);
-        int startingIndex = 0;
-        for (int column = 0; column < columnCount; column++) {
-            int offsetY = baseOffsetY;
-            for (int u = 0; u < playersPerColumn; u++) {
-                int i = startingIndex + u;
-                if (i < playerRows.size()) {
-                    g.drawImage(playerRows.get(i), 2 + ((masterOffsetX + 2) * column), offsetY, null);
-                }
-                offsetY += 18;
-            }
-            startingIndex += playersPerColumn;
-        }
-        g.dispose();
-
-        int maxOffsetX = Stream.concat(headerLines.values().stream(), footerLines.values().stream()).mapToInt(each -> each).max().orElse(0);
-        if (maxOffsetX <= 0) {
-            return image;
-        } else {
-            BufferedImage decoration = new BufferedImage(Math.max(image.getWidth(), maxOffsetX + 4), (headerLines.isEmpty() ? 0 : headerLines.size() * 18 + 2) + image.getHeight() + (footerLines.isEmpty() ? 2 : footerLines.size() * 18 + 4), BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2 = decoration.createGraphics();
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            int offsetY = -((TABLIST_INTERNAL_HEIGHT - 18) / 2 - 2);
-            for (BufferedImage each : headerLines.keySet()) {
-                g2.drawImage(each, (decoration.getWidth() / 2) - (each.getWidth() / 2), offsetY, null);
-                offsetY += 18;
-            }
-            g2.drawImage(image, (decoration.getWidth() / 2) - (image.getWidth() / 2), offsetY + ((TABLIST_INTERNAL_HEIGHT - 18) / 2), null);
-            offsetY += image.getHeight() + 2;
-            for (BufferedImage each : footerLines.keySet()) {
-                g2.drawImage(each, (decoration.getWidth() / 2) - (each.getWidth() / 2), offsetY, null);
-                offsetY += 18;
-            }
-            g2.dispose();
-            int lastY = offsetY + ((TABLIST_INTERNAL_HEIGHT - 18) / 2 - 2);
-            for (int y = offsetY + ((TABLIST_INTERNAL_HEIGHT - 18) / 2 - 2); y < decoration.getHeight(); y++) {
-                for (int x = 0; x < decoration.getWidth(); x++) {
-                    if (decoration.getRGB(x, y) != 0) {
-                        lastY = y;
-                        break;
-                    }
-                }
-            }
-            BufferedImage finalDecoration = new BufferedImage(decoration.getWidth(), lastY + 3, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g3 = finalDecoration.createGraphics();
-            g3.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g3.setColor(TABLIST_BACKGROUND);
-            g3.fillRect(0, 0, finalDecoration.getWidth(), finalDecoration.getHeight());
-            g3.drawImage(decoration, 0, 0, null);
-            g3.dispose();
-            return finalDecoration;
-        }
-    }
-
     public static GenericContainerBackgroundResult getGenericContainerBackground(int rows, ContainerTitlePrintingFunction titlePrintingFunction) {
         rows = Math.max(rows, 1);
         BufferedImage image = resourceManager.get().getTextureManager().getTexture(ResourceRegistry.IC_GUI_TEXTURE_LOCATION + "generic_54").getTexture(356, 268);
@@ -1476,80 +1244,6 @@ public class ImageGeneration {
         return new GenericContainerBackgroundResult(resultImage, expandedX, expandedY);
     }
 
-    public static BufferedImage getPingIcon(int ms, boolean useNoConnectionIcon) {
-        if (resourceManager.get().getNativeServerPackFormat().getMajor() < 16) {
-            BufferedImage icons = resourceManager.get().getTextureManager().getTexture(ResourceRegistry.GUI_TEXTURE_LOCATION + "icons").getTexture();
-            int scale = icons.getWidth() / 256;
-            if (useNoConnectionIcon && ms < 0) {
-                return icons.getSubimage(0, 55 * scale, 10 * scale, 8 * scale);
-            } else if (ms < 150) {
-                return icons.getSubimage(0, 15 * scale, 10 * scale, 8 * scale);
-            } else if (ms < 300) {
-                return icons.getSubimage(0, 24 * scale, 10 * scale, 8 * scale);
-            } else if (ms < 600) {
-                return icons.getSubimage(0, 31 * scale, 10 * scale, 8 * scale);
-            } else if (ms < 1000) {
-                return icons.getSubimage(0, 39 * scale, 10 * scale, 8 * scale);
-            } else {
-                return icons.getSubimage(0, 47 * scale, 10 * scale, 8 * scale);
-            }
-        } else {
-            String location = ResourceRegistry.DEFAULT_SPRITE_LOCATION + "icon/";
-            if (useNoConnectionIcon && ms < 0) {
-                location += "ping_unknown";
-            } else if (ms < 150) {
-                location += "ping_5";
-            } else if (ms < 300) {
-                location += "ping_4";
-            } else if (ms < 600) {
-                location += "ping_3";
-            } else if (ms < 1000) {
-                location += "ping_2";
-            } else {
-                location += "ping_1";
-            }
-            return resourceManager.get().getTextureManager().getTexture(location).getTexture(true);
-        }
-    }
-
-    public static BufferedImage getAdvancementFrame(AdvancementType advancementType, boolean completed) {
-        if (advancementType.isLegacy()) {
-            BufferedImage icons = resourceManager.get().getTextureManager().getTexture(ResourceRegistry.GUI_TEXTURE_LOCATION + "achievement/achievement_background").getTexture();
-            int scale = icons.getWidth() / 256;
-            return icons.getSubimage(0, 202 * scale, 26 * scale, 26 * scale);
-        } else if (resourceManager.get().getNativeServerPackFormat().getMajor() < 16) {
-            BufferedImage icons = resourceManager.get().getTextureManager().getTexture(ResourceRegistry.GUI_TEXTURE_LOCATION + "advancements/widgets").getTexture();
-            int scale = icons.getWidth() / 256;
-            int offsetY = completed ? 0 : 26 * scale;
-            switch (advancementType) {
-                case CHALLENGE:
-                    return icons.getSubimage(26 * scale, 128 * scale + offsetY, 26 * scale, 26 * scale);
-                case GOAL:
-                    return icons.getSubimage(52 * scale, 128 * scale + offsetY, 26 * scale, 26 * scale);
-                case TASK:
-                default:
-                    return icons.getSubimage(0, 128 * scale + offsetY, 26 * scale, 26 * scale);
-            }
-        } else {
-            String location = ResourceRegistry.DEFAULT_SPRITE_LOCATION + "advancements/";
-            switch (advancementType) {
-                case CHALLENGE: {
-                    location += (completed ? "challenge_frame_obtained" : "challenge_frame_unobtained");
-                    break;
-                }
-                case GOAL: {
-                    location += (completed ? "goal_frame_obtained" : "goal_frame_unobtained");
-                    break;
-                }
-                case TASK:
-                default: {
-                    location += (completed ? "task_frame_obtained" : "task_frame_unobtained");
-                    break;
-                }
-            }
-            return resourceManager.get().getTextureManager().getTexture(location).getTexture(true);
-        }
-    }
 
     public static BufferedImage getBundleContainerInterface(OfflineICPlayer offlineICPlayer, List<ItemStack> items) throws IOException {
         PackFormatVersion packFormat = resourceManager.get().getNativeServerPackFormat();

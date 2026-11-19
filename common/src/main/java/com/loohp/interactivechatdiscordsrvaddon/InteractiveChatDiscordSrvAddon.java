@@ -44,14 +44,7 @@ import com.loohp.interactivechatdiscordsrvaddon.debug.Debug;
 import com.loohp.interactivechatdiscordsrvaddon.graphics.ImageGeneration;
 import com.loohp.interactivechatdiscordsrvaddon.graphics.ImageUtils;
 import com.loohp.interactivechatdiscordsrvaddon.hooks.craftengine.CraftEngineHook;
-import com.loohp.interactivechatdiscordsrvaddon.hooks.imageframe.ImageFrameEvents;
-import com.loohp.interactivechatdiscordsrvaddon.listeners.DiscordCommandEvents;
-import com.loohp.interactivechatdiscordsrvaddon.listeners.DiscordInteractionEvents;
-import com.loohp.interactivechatdiscordsrvaddon.listeners.DiscordReadyEvents;
 import com.loohp.interactivechatdiscordsrvaddon.listeners.ICPlayerEvents;
-import com.loohp.interactivechatdiscordsrvaddon.listeners.InboundToGameEvents;
-import com.loohp.interactivechatdiscordsrvaddon.listeners.LegacyDiscordCommandEvents;
-import com.loohp.interactivechatdiscordsrvaddon.listeners.OutboundToDiscordEvents;
 import com.loohp.interactivechatdiscordsrvaddon.metrics.Charts;
 import com.loohp.interactivechatdiscordsrvaddon.metrics.Metrics;
 import com.loohp.interactivechatdiscordsrvaddon.registry.InteractiveChatRegistry;
@@ -73,10 +66,8 @@ import com.loohp.interactivechatdiscordsrvaddon.resources.mods.optifine.Optifine
 import com.loohp.interactivechatdiscordsrvaddon.updater.Updater;
 import com.loohp.interactivechatdiscordsrvaddon.utils.ResourcePackUtils;
 import com.loohp.interactivechatdiscordsrvaddon.utils.TranslationKeyUtils;
-import github.scarsz.discordsrv.DiscordSRV;
-import github.scarsz.discordsrv.api.ListenerPriority;
-import github.scarsz.discordsrv.dependencies.jda.api.Permission;
-import github.scarsz.discordsrv.dependencies.jda.api.requests.GatewayIntent;
+import com.loohp.interactivechatdiscordsrvaddon.yep.YepGameListener;
+import com.loohp.interactivechatdiscordsrvaddon.yep.YepProtocol;
 import java.util.stream.Collectors;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -94,7 +85,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
@@ -118,19 +108,8 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
     public static final int BSTATS_PLUGIN_ID = 8863;
     public static final String CONFIG_ID = "interactivechatdiscordsrvaddon_config";
 
-    public static final List<Permission> requiredPermissions = Collections.unmodifiableList(Arrays.asList(
-        Permission.MESSAGE_READ,
-        Permission.MESSAGE_WRITE,
-        Permission.MESSAGE_MANAGE,
-        Permission.MESSAGE_EMBED_LINKS,
-        Permission.MESSAGE_ATTACH_FILES,
-        Permission.MANAGE_WEBHOOKS
-    ));
-
     public static InteractiveChatDiscordSrvAddon plugin;
     public static InteractiveChat interactivechat;
-    public static DiscordSRV discordsrv;
-
     public static boolean itemsAdderHook = false;
     public static boolean imageFrameHook = false;
     public static boolean craftEngineHook = false;
@@ -144,13 +123,7 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
     public AtomicLong messagesCounter = new AtomicLong(0);
     public AtomicLong imageCounter = new AtomicLong(0);
     public AtomicLong inventoryImageCounter = new AtomicLong(0);
-    public AtomicLong attachmentCounter = new AtomicLong(0);
-    public AtomicLong attachmentImageCounter = new AtomicLong(0);
-    public AtomicLong imagesViewedCounter = new AtomicLong(0);
     public Queue<Integer> playerModelRenderingTimes = new ConcurrentLinkedQueue<>();
-    public ListenerPriority gameToDiscordPriority = ListenerPriority.HIGHEST;
-    public ListenerPriority ventureChatToDiscordPriority = ListenerPriority.HIGHEST;
-    public ListenerPriority discordToGamePriority = ListenerPriority.HIGH;
     public boolean itemImage = true;
     public boolean invImage = true;
     public boolean enderImage = true;
@@ -163,104 +136,19 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
     public boolean itemUseTooltipImageOnBaseItem = false;
     public boolean itemAltAir = true;
     public boolean invShowLevel = true;
-    public boolean hoverEnabled = true;
-    public boolean hoverImage = true;
-    public Set<String> hoverIgnore = new HashSet<>();
-    public boolean hoverUseTooltipImage = true;
     public String reloadConfigMessage;
     public String reloadTextureMessage;
-    public String linkExpired;
-    public String interactionExpire;
-    public String previewLoading;
-    public String accountNotLinked;
-    public String unableToRetrieveData;
-    public String invalidDiscordChannel;
     public String trueLabel;
     public String falseLabel;
     public String defaultResourceHashLang;
     public String fontsActiveLang;
     public String loadedResourcesLang;
-    public boolean convertDiscordAttachments = true;
-    public String discordAttachmentsFormattingText;
-    public boolean discordAttachmentsFormattingHoverEnabled = true;
-    public String discordAttachmentsFormattingHoverText;
-    public boolean discordAttachmentsImagesUseMaps = true;
-    public long discordAttachmentsPreviewLimit = 0;
-    public int discordAttachmentTimeout = 0;
-    public String discordAttachmentsFormattingImageAppend;
-    public String discordAttachmentsFormattingImageAppendHover;
-    public Color discordAttachmentsMapBackgroundColor = null;
-    public boolean imageWhitelistEnabled = false;
-    public List<String> whitelistedImageUrls = new ArrayList<>();
-    public boolean translateMentions = true;
-    public boolean suppressDiscordPings = false;
-    public String mentionHighlight = "";
-    public boolean deathMessageItem = true;
-    public boolean deathMessageTranslated = true;
-    public String deathMessageTitle = "";
-    public boolean advancementName = true;
-    public boolean advancementItem = true;
-    public boolean advancementDescription = true;
     public boolean updaterEnabled = true;
     public int cacheTimeout = 1200;
     public boolean escapePlaceholdersFromDiscord = true;
     public boolean escapeDiscordMarkdownInItems = true;
     public boolean reducedAssetsDownloadInfo = false;
-    public boolean playbackBarEnabled = true;
-    public Color playbackBarFilledColor;
-    public Color playbackBarEmptyColor;
     public String language = "en_us";
-    public boolean respondToCommandsInInvalidChannels = true;
-    public String discordMemberLabel = "";
-    public String discordMemberDescription = "";
-    public String discordSlotLabel = "";
-    public String discordSlotDescription = "";
-    public boolean resourcepackCommandEnabled = true;
-    public String resourcepackCommandDescription = "";
-    public boolean resourcepackCommandIsMainServer = true;
-    public boolean playerinfoCommandEnabled = true;
-    public String playerinfoCommandDescription = "";
-    public boolean playerinfoCommandIsMainServer = true;
-    public String playerinfoCommandFormatTitle = "";
-    public String playerinfoCommandFormatSubTitle = "";
-    public List<String> playerinfoCommandFormatOnline = new ArrayList<>();
-    public List<String> playerinfoCommandFormatOffline = new ArrayList<>();
-    public boolean playerlistCommandEnabled = true;
-    public String playerlistCommandDescription = "";
-    public boolean playerlistCommandIsMainServer = true;
-    public boolean playerlistCommandBungeecord = true;
-    public boolean playerlistCommandOnlyInteractiveChatServers = true;
-    public int playerlistCommandDeleteAfter = 10;
-    public String playerlistCommandPlayerFormat = "";
-    public boolean playerlistCommandAvatar = true;
-    public boolean playerlistCommandPing = true;
-    public String playerlistCommandHeader = "";
-    public String playerlistCommandFooter = "";
-    public boolean playerlistCommandParsePlayerNamesWithMiniMessage = false;
-    public String playerlistCommandEmptyServer = "";
-    public Color playerlistCommandColor = new Color(153, 153, 153);
-    public int playerlistCommandMinWidth = 0;
-    public int playerlistMaxPlayers = 80;
-    public List<String> playerlistOrderingTypes = new ArrayList<>();
-    public boolean shareItemCommandEnabled = true;
-    public boolean shareItemCommandAsOthers = true;
-    public boolean shareItemCommandIsMainServer = true;
-    public String shareItemCommandInGameMessageText = "";
-    public String shareItemCommandTitle = "";
-    public boolean shareInvCommandEnabled = true;
-    public boolean shareInvCommandAsOthers = true;
-    public boolean shareInvCommandIsMainServer = true;
-    public String shareInvCommandInGameMessageText = "";
-    public String shareInvCommandInGameMessageHover = "";
-    public String shareInvCommandTitle = "";
-    public String shareInvCommandSkullName = "";
-    public boolean shareEnderCommandEnabled = true;
-    public boolean shareEnderCommandAsOthers = true;
-    public boolean shareEnderCommandIsMainServer = true;
-    public String shareEnderCommandInGameMessageText = "";
-    public String shareEnderCommandInGameMessageHover = "";
-    public String shareEnderCommandTitle = "";
-    public PlaceholderCooldownManager placeholderCooldownManager;
     public String defaultResourceHash = "N/A";
     public List<String> resourceOrder = new ArrayList<>();
     public boolean forceUnicode = false;
@@ -282,6 +170,7 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
     public boolean showBooks = true;
     public boolean showContainers = true;
     public int rendererThreads = -1;
+    public PlaceholderCooldownManager placeholderCooldownManager;
 
     private ResourceManager resourceManager;
     public ModelRenderer modelRenderer;
@@ -302,15 +191,13 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
 
     @Override
     public void onLoad() {
-        DiscordSRV.api.requireIntent(GatewayIntent.GUILD_MESSAGE_REACTIONS);
-        DiscordSRV.api.subscribe(new DiscordCommandEvents());
+        // No DiscordSRV initialization: the Discord connection lives on the Velocity proxy.
     }
 
     @Override
     public void onEnable() {
         plugin = this;
         interactivechat = InteractiveChat.plugin;
-        discordsrv = DiscordSRV.getPlugin();
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
@@ -330,14 +217,9 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
         metrics = new Metrics(this, BSTATS_PLUGIN_ID);
         Charts.setup(metrics);
 
-        DiscordSRV.api.subscribe(new DiscordReadyEvents());
-        DiscordSRV.api.subscribe(new LegacyDiscordCommandEvents());
-        DiscordSRV.api.subscribe(new OutboundToDiscordEvents());
-        DiscordSRV.api.subscribe(new InboundToGameEvents());
-
         getServer().getPluginManager().registerEvents(this, this);
-        getServer().getPluginManager().registerEvents(new InboundToGameEvents(), this);
-        getServer().getPluginManager().registerEvents(new OutboundToDiscordEvents(), this);
+        getServer().getPluginManager().registerEvents(new YepGameListener(), this);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, YepProtocol.YEP_GENERIC_CHANNEL);
         getServer().getPluginManager().registerEvents(new ICPlayerEvents(), this);
         getServer().getPluginManager().registerEvents(new Debug(), this);
         getServer().getPluginManager().registerEvents(new Updater(), this);
@@ -370,8 +252,7 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
         }
 
         if (InteractiveChat.isPluginEnabled("ImageFrame")) {
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "[ICDiscordSrvAddon] InteractiveChat DiscordSRV Addon has hooked into ImageFrame!");
-            Bukkit.getPluginManager().registerEvents(new ImageFrameEvents(), this);
+            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "[ICDiscordSrvAddon] Hooked into ImageFrame!");
             imageFrameHook = true;
         }
 
@@ -445,7 +326,6 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
 
     @Override
     public void onDisable() {
-        DiscordInteractionEvents.unregisterAll();
         modelRenderer.close();
         mediaReadingService.shutdown();
         if (resourceManager != null) {
@@ -470,12 +350,6 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
 
         reloadConfigMessage = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.ReloadConfig"));
         reloadTextureMessage = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.ReloadTexture"));
-        linkExpired = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.LinkExpired"));
-        previewLoading = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.PreviewLoading"));
-        accountNotLinked = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.AccountNotLinked"));
-        unableToRetrieveData = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.UnableToRetrieveData"));
-        invalidDiscordChannel = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.InvalidDiscordChannel"));
-        interactionExpire = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.InteractionExpired"));
         trueLabel = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.TrueLabel"));
         falseLabel = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("Messages.FalseLabel"));
 
@@ -513,33 +387,6 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
 
         invShowLevel = config.getConfiguration().getBoolean("InventoryImage.Inventory.ShowExperienceLevel");
 
-        hoverEnabled = config.getConfiguration().getBoolean("HoverEventDisplay.Enabled");
-        hoverImage = config.getConfiguration().getBoolean("HoverEventDisplay.ShowCursorImage");
-        hoverIgnore.clear();
-        hoverIgnore = new HashSet<>(config.getConfiguration().getStringList("HoverEventDisplay.IgnoredPlaceholderKeys"));
-
-        hoverUseTooltipImage = config.getConfiguration().getBoolean("HoverEventDisplay.UseTooltipImage");
-
-        convertDiscordAttachments = config.getConfiguration().getBoolean("DiscordAttachments.Convert");
-        discordAttachmentsFormattingText = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordAttachments.Formatting.Text"));
-        discordAttachmentsFormattingHoverEnabled = config.getConfiguration().getBoolean("DiscordAttachments.Formatting.Hover.Enabled");
-        discordAttachmentsFormattingHoverText = ChatColorUtils.translateAlternateColorCodes('&', String.join("\n", config.getConfiguration().getStringList("DiscordAttachments.Formatting.Hover.HoverText")));
-        discordAttachmentsImagesUseMaps = config.getConfiguration().getBoolean("DiscordAttachments.ShowImageUsingMaps");
-        discordAttachmentsPreviewLimit = config.getConfiguration().getLong("DiscordAttachments.FileSizeLimit");
-        discordAttachmentTimeout = config.getConfiguration().getInt("DiscordAttachments.Timeout") * 20;
-        discordAttachmentsFormattingImageAppend = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordAttachments.Formatting.ImageOriginal"));
-        discordAttachmentsFormattingImageAppendHover = ChatColorUtils.translateAlternateColorCodes('&', String.join("\n", config.getConfiguration().getStringList("DiscordAttachments.Formatting.Hover.ImageOriginalHover")));
-
-        boolean transparent = config.getConfiguration().getBoolean("DiscordAttachments.ImageMapBackground.Transparent");
-        if (transparent) {
-            discordAttachmentsMapBackgroundColor = null;
-        } else {
-            discordAttachmentsMapBackgroundColor = ColorUtils.hex2Rgb(config.getConfiguration().getString("DiscordAttachments.ImageMapBackground.Color"));
-        }
-
-        imageWhitelistEnabled = config.getConfiguration().getBoolean("DiscordAttachments.RestrictImageUrl.Enabled");
-        whitelistedImageUrls = config.getConfiguration().getStringList("DiscordAttachments.RestrictImageUrl.Whitelist");
-
         updaterEnabled = config.getConfiguration().getBoolean("Options.UpdaterEnabled");
 
         cacheTimeout = config.getConfiguration().getInt("Settings.CacheTimeout") * 20;
@@ -550,88 +397,10 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
 
         embedDeleteAfter = config.getConfiguration().getInt("Settings.EmbedDeleteAfter");
 
-        gameToDiscordPriority = ListenerPriority.valueOf(config.getConfiguration().getString("Settings.ListenerPriorities.GameToDiscord").toUpperCase());
-        ventureChatToDiscordPriority = ListenerPriority.valueOf(config.getConfiguration().getString("Settings.ListenerPriorities.VentureChatToDiscord").toUpperCase());
-        discordToGamePriority = ListenerPriority.valueOf(config.getConfiguration().getString("Settings.ListenerPriorities.DiscordToGame").toUpperCase());
-
         itemDisplaySingle = config.getConfiguration().getString("InventoryImage.Item.EmbedDisplay.Single");
         itemDisplayMultiple = config.getConfiguration().getString("InventoryImage.Item.EmbedDisplay.Multiple");
         invColor = ColorUtils.hex2Rgb(config.getConfiguration().getString("InventoryImage.Inventory.EmbedColor"));
         enderColor = ColorUtils.hex2Rgb(config.getConfiguration().getString("InventoryImage.EnderChest.EmbedColor"));
-
-        deathMessageItem = config.getConfiguration().getBoolean("DeathMessage.ShowItems");
-        deathMessageTranslated = config.getConfiguration().getBoolean("DeathMessage.TranslatedDeathMessage");
-        deathMessageTitle = config.getConfiguration().getString("DeathMessage.Title");
-
-        advancementName = config.getConfiguration().getBoolean("Advancements.CorrectAdvancementName");
-        advancementItem = config.getConfiguration().getBoolean("Advancements.ChangeToItemIcon");
-        advancementDescription = config.getConfiguration().getBoolean("Advancements.ShowDescription");
-
-        translateMentions = config.getConfiguration().getBoolean("DiscordMention.TranslateMentions");
-        suppressDiscordPings = config.getConfiguration().getBoolean("DiscordMention.SuppressDiscordPings");
-        mentionHighlight = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordMention.MentionHighlight"));
-
-        playbackBarEnabled = config.getConfiguration().getBoolean("DiscordAttachments.PlaybackBar.Enabled");
-        playbackBarFilledColor = ColorUtils.hex2Rgb(config.getConfiguration().getString("DiscordAttachments.PlaybackBar.FilledColor"));
-        playbackBarEmptyColor = ColorUtils.hex2Rgb(config.getConfiguration().getString("DiscordAttachments.PlaybackBar.EmptyColor"));
-
-        respondToCommandsInInvalidChannels = config.getConfiguration().getBoolean("DiscordCommands.GlobalSettings.RespondToCommandsInInvalidChannels");
-
-        discordMemberLabel = config.getConfiguration().getString("DiscordCommands.GlobalSettings.Messages.MemberLabel").toLowerCase();
-        discordMemberDescription = config.getConfiguration().getString("DiscordCommands.GlobalSettings.Messages.MemberDescription");
-        discordSlotLabel = config.getConfiguration().getString("DiscordCommands.GlobalSettings.Messages.SlotLabel").toLowerCase();
-        discordSlotDescription = config.getConfiguration().getString("DiscordCommands.GlobalSettings.Messages.SlotDescription");
-
-        resourcepackCommandEnabled = config.getConfiguration().getBoolean("DiscordCommands.ResourcePack.Enabled");
-        resourcepackCommandDescription = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.ResourcePack.Description"));
-        resourcepackCommandIsMainServer = config.getConfiguration().getBoolean("DiscordCommands.ResourcePack.IsMainServer");
-
-        playerinfoCommandEnabled = config.getConfiguration().getBoolean("DiscordCommands.PlayerInfo.Enabled");
-        playerinfoCommandDescription = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.PlayerInfo.Description"));
-        playerinfoCommandIsMainServer = config.getConfiguration().getBoolean("DiscordCommands.PlayerInfo.IsMainServer");
-        playerinfoCommandFormatTitle = config.getConfiguration().getString("DiscordCommands.PlayerInfo.InfoFormatting.Title");
-        playerinfoCommandFormatSubTitle = config.getConfiguration().getString("DiscordCommands.PlayerInfo.InfoFormatting.SubTitle");
-        playerinfoCommandFormatOnline = config.getConfiguration().getStringList("DiscordCommands.PlayerInfo.InfoFormatting.WhenOnline");
-        playerinfoCommandFormatOffline = config.getConfiguration().getStringList("DiscordCommands.PlayerInfo.InfoFormatting.WhenOffline");
-
-        playerlistCommandEnabled = config.getConfiguration().getBoolean("DiscordCommands.PlayerList.Enabled");
-        playerlistCommandDescription = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.PlayerList.Description"));
-        playerlistCommandIsMainServer = config.getConfiguration().getBoolean("DiscordCommands.PlayerList.IsMainServer");
-        playerlistCommandBungeecord = config.getConfiguration().getBoolean("DiscordCommands.PlayerList.ListBungeecordPlayers");
-        playerlistCommandOnlyInteractiveChatServers = config.getConfiguration().getBoolean("DiscordCommands.PlayerList.OnlyInteractiveChatServers");
-        playerlistCommandDeleteAfter = config.getConfiguration().getInt("DiscordCommands.PlayerList.DeleteAfter");
-        playerlistCommandPlayerFormat = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.PlayerList.TablistOptions.PlayerFormat"));
-        playerlistCommandAvatar = config.getConfiguration().getBoolean("DiscordCommands.PlayerList.TablistOptions.ShowPlayerAvatar");
-        playerlistCommandPing = config.getConfiguration().getBoolean("DiscordCommands.PlayerList.TablistOptions.ShowPlayerPing");
-        playerlistCommandHeader = ChatColorUtils.translateAlternateColorCodes('&', String.join("\n", config.getConfiguration().getStringList("DiscordCommands.PlayerList.TablistOptions.HeaderText")));
-        playerlistCommandFooter = ChatColorUtils.translateAlternateColorCodes('&', String.join("\n", config.getConfiguration().getStringList("DiscordCommands.PlayerList.TablistOptions.FooterText")));
-        playerlistCommandParsePlayerNamesWithMiniMessage = config.getConfiguration().getBoolean("DiscordCommands.PlayerList.TablistOptions.ParsePlayerNamesWithMiniMessage");
-        playerlistCommandEmptyServer = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.PlayerList.EmptyServer"));
-        playerlistCommandColor = ColorUtils.hex2Rgb(config.getConfiguration().getString("DiscordCommands.PlayerList.TablistOptions.SidebarColor"));
-        playerlistCommandMinWidth = config.getConfiguration().getInt("DiscordCommands.PlayerList.TablistOptions.PlayerMinWidth");
-        playerlistMaxPlayers = config.getConfiguration().getInt("DiscordCommands.PlayerList.TablistOptions.MaxPlayersDisplayable");
-        playerlistOrderingTypes = config.getConfiguration().getStringList("DiscordCommands.PlayerList.TablistOptions.PlayerOrder.OrderBy");
-
-        shareItemCommandEnabled = config.getConfiguration().getBoolean("DiscordCommands.ShareItem.Enabled");
-        shareItemCommandAsOthers = config.getConfiguration().getBoolean("DiscordCommands.ShareItem.AllowAsOthers");
-        shareItemCommandIsMainServer = config.getConfiguration().getBoolean("DiscordCommands.ShareItem.IsMainServer");
-        shareItemCommandInGameMessageText = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.ShareItem.InGameMessage.Text"));
-        shareItemCommandTitle = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.ShareItem.InventoryTitle"));
-
-        shareInvCommandEnabled = config.getConfiguration().getBoolean("DiscordCommands.ShareInventory.Enabled");
-        shareInvCommandAsOthers = config.getConfiguration().getBoolean("DiscordCommands.ShareInventory.AllowAsOthers");
-        shareInvCommandIsMainServer = config.getConfiguration().getBoolean("DiscordCommands.ShareInventory.IsMainServer");
-        shareInvCommandInGameMessageText = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.ShareInventory.InGameMessage.Text"));
-        shareInvCommandInGameMessageHover = ChatColorUtils.translateAlternateColorCodes('&', String.join("\n", config.getConfiguration().getStringList("DiscordCommands.ShareInventory.InGameMessage.Hover")));
-        shareInvCommandTitle = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.ShareInventory.InventoryTitle"));
-        shareInvCommandSkullName = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.ShareInventory.SkullDisplayName"));
-
-        shareEnderCommandEnabled = config.getConfiguration().getBoolean("DiscordCommands.ShareEnderChest.Enabled");
-        shareEnderCommandAsOthers = config.getConfiguration().getBoolean("DiscordCommands.ShareEnderChest.AllowAsOthers");
-        shareEnderCommandIsMainServer = config.getConfiguration().getBoolean("DiscordCommands.ShareEnderChest.IsMainServer");
-        shareEnderCommandInGameMessageText = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.ShareEnderChest.InGameMessage.Text"));
-        shareEnderCommandInGameMessageHover = ChatColorUtils.translateAlternateColorCodes('&', String.join("\n", config.getConfiguration().getStringList("DiscordCommands.ShareEnderChest.InGameMessage.Hover")));
-        shareEnderCommandTitle = ChatColorUtils.translateAlternateColorCodes('&', config.getConfiguration().getString("DiscordCommands.ShareEnderChest.InventoryTitle"));
 
         showDurability = config.getConfiguration().getBoolean("ToolTipSettings.ShowDurability");
         showArmorColor = config.getConfiguration().getBoolean("ToolTipSettings.ShowArmorColor");
@@ -652,7 +421,6 @@ public class InteractiveChatDiscordSrvAddon extends JavaPlugin implements Listen
 
         FontTextureResource.setCacheTime(cacheTimeout);
 
-        discordsrv.reloadRegexes();
     }
 
     public byte[] getExtras(String str) {

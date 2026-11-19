@@ -30,15 +30,12 @@ import com.loohp.interactivechat.utils.ChatColorUtils;
 import com.loohp.interactivechat.utils.ComponentStyling;
 import com.loohp.interactivechat.utils.LanguageUtils;
 import com.loohp.interactivechatdiscordsrvaddon.api.events.InteractiveChatDiscordSRVConfigReloadEvent;
-import com.loohp.interactivechatdiscordsrvaddon.listeners.InboundToGameEvents;
-import com.loohp.interactivechatdiscordsrvaddon.listeners.InboundToGameEvents.DiscordAttachmentData;
 import com.loohp.interactivechatdiscordsrvaddon.registry.ResourceRegistry;
 import com.loohp.interactivechatdiscordsrvaddon.resources.ResourcePackInfo;
 import com.loohp.interactivechatdiscordsrvaddon.updater.Updater;
 import com.loohp.interactivechatdiscordsrvaddon.updater.Updater.UpdaterResponse;
 import com.loohp.interactivechatdiscordsrvaddon.utils.ResourcePackInfoUtils;
 import com.loohp.interactivechatdiscordsrvaddon.utils.TranslationKeyUtils;
-import com.loohp.interactivechatdiscordsrvaddon.wrappers.GraphicsToPacketMapWrapper;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -50,7 +47,6 @@ import org.bukkit.entity.Player;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class Commands implements CommandExecutor, TabCompleter {
@@ -166,34 +162,6 @@ public class Commands implements CommandExecutor, TabCompleter {
                 });
             } else {
                 InteractiveChat.sendMessage(sender, InteractiveChat.noPermissionMessage);
-            }
-            return true;
-        }
-
-        if (args[0].equalsIgnoreCase("imagemap")) {
-            if (args.length > 1 && sender instanceof Player) {
-                try {
-                    DiscordAttachmentData data = InboundToGameEvents.DATA.get(UUID.fromString(args[1]));
-                    if (data != null && (data.isImage() || data.isVideo())) {
-                        GraphicsToPacketMapWrapper imageMap = data.getImageMap();
-                        if (imageMap.futureCancelled()) {
-                            sender.sendMessage(InteractiveChatDiscordSrvAddon.plugin.linkExpired);
-                        } else if (imageMap.futureCompleted()) {
-                            if (imageMap.getColors() == null || imageMap.getColors().isEmpty()) {
-                                sender.sendMessage(InteractiveChatDiscordSrvAddon.plugin.linkExpired);
-                            } else {
-                                imageMap.show((Player) sender);
-                            }
-                        } else {
-                            sender.sendMessage(InteractiveChatDiscordSrvAddon.plugin.previewLoading);
-                        }
-                    } else {
-                        sender.sendMessage(InteractiveChatDiscordSrvAddon.plugin.linkExpired);
-                    }
-                } catch (Exception e) {
-                    sender.sendMessage(InteractiveChatDiscordSrvAddon.plugin.linkExpired);
-                    e.printStackTrace();
-                }
             }
             return true;
         }

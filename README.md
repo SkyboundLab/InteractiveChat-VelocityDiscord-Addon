@@ -1,52 +1,23 @@
-[![Build Status](https://ci.loohpjames.com/job/InteractiveChat-DiscordSRV-Addon/badge/icon)](https://ci.loohpjames.com/job/InteractiveChat-DiscordSRV-Addon/)
-# InteractiveChat DiscordSRV Addon
+# InteractiveChat VelocityDiscord addon
 
-https://www.spigotmc.org/resources/83917/<br>
-https://modrinth.com/plugin/interactivechat-discordsrv-addon/<br>
-https://hangar.papermc.io/LOOHP/InteractiveChatDiscordSRV
+A fork of [InteractiveChat-DiscordSRV-Addon](https://github.com/LOOHP/InteractiveChat-DiscordSRV-Addon) for [VelocityDiscord (fork)](https://github.com/SkyboundLab/VelocityDiscord).
 
-Have InteractiveChat Placeholders translated on DiscordSRV discord messages. As well as sharing items, inventories to discord and sharing images and gifs to the game from discord!
+The plugin relays the `%item%`, `%inv%`, and `%ender%` chat placeholders as Discord embeds and PNG attachments.
 
-More information (screenshots, commands, permissions) about the plugin can be found on the Spigot page linked above.
+Death, advancement, hover/click, attachments and commands are removed.
 
-## Built against Spigot
-Built against [Spigot's API](https://www.spigotmc.org/wiki/buildtools/) (required mc versions are listed on the spigot page above).
-Plugins built against Spigot usually also work with [Paper](https://papermc.io/).
+## Setup
 
-## Development Builds
+1. Put the jar in `plugins/` on every backend server, next to InteractiveChat.
+2. Put YepLib and VelocityDiscord on the Velocity proxy.
+3. Start the server. The plugin writes `config.yml` on first start.
 
-- [Jenkins](https://ci.loohpjames.com/job/InteractiveChat-DiscordSRV-Addon/)
+## Build
 
-## Maven
-```html
-<repository>
-  <id>loohp-repo</id>
-  <url>https://repo.loohpjames.com/repository</url>
-</repository>
+JDK 25 is required.
+
 ```
-```html
-<dependency>
-  <groupId>com.loohp</groupId>
-  <artifactId>InteractiveChatDiscordSrvAddon</artifactId>
-  <version>VERSION</version>
-  <scope>provided</scope>
-</dependency>
+mvn -DskipTests clean package
 ```
-Replace `VERSION` with the version number.
 
-## Dependencies 
-
-- [InteractiveChat](https://www.spigotmc.org/resources/75870/)
-- [DiscordSRV](https://www.spigotmc.org/resources/discordsrv.18494/)
-
-## Partnerships
-
-### Server Hosting
-**Use the link or click the banner** below to **get a 25% discount off** your first month when buying any of their gaming servers!<br>
-It also **supports my development**, take it as an alternative way to donate while getting your very own Minecraft server as well!
-
-*P.S. Using the link or clicking the banner rather than the code supports me more! (Costs you no extra!)*
-
-**https://www.bisecthosting.com/loohp**
-
-[![](https://www.bisecthosting.com/partners/custom-banners/96e11ee5-50e4-494f-854d-8c1708813abd.png)](https://www.bisecthosting.com/loohp)
+The jar lands at `common/target/InteractiveChatVelocityDiscordAddon-<version>.jar`.

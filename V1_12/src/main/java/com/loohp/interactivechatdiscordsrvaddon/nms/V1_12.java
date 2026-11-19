@@ -32,8 +32,6 @@ import com.loohp.interactivechat.libs.org.apache.commons.text.WordUtils;
 import com.loohp.interactivechat.nms.NMS;
 import com.loohp.interactivechat.objectholders.ICMaterial;
 import com.loohp.interactivechat.utils.InteractiveChatComponentSerializer;
-import com.loohp.interactivechatdiscordsrvaddon.objectholders.AdvancementData;
-import com.loohp.interactivechatdiscordsrvaddon.objectholders.AdvancementType;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.AttributeBase;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.BiomePrecipitation;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.CustomModelData;
@@ -374,31 +372,6 @@ public class V1_12 extends NMSAddonWrapper {
     }
 
     @Override
-    public AdvancementData getAdvancementDataFromBukkitAdvancement(Object bukkitAdvancement) {
-        try {
-            advancementDisplayItemStackField.setAccessible(true);
-            net.minecraft.server.v1_12_R1.Advancement advancement = ((CraftAdvancement) bukkitAdvancement).getHandle();
-            AdvancementDisplay display = advancement.c();
-            if (display == null) {
-                return null;
-            }
-            Component title = InteractiveChatComponentSerializer.gson().deserialize(IChatBaseComponent.ChatSerializer.a(display.a()));
-            Component description = InteractiveChatComponentSerializer.gson().deserialize(IChatBaseComponent.ChatSerializer.a(display.b()));
-            ItemStack item = CraftItemStack.asBukkitCopy((net.minecraft.server.v1_12_R1.ItemStack) advancementDisplayItemStackField.get(display));
-            AdvancementType advancementType = AdvancementType.fromName(display.e().a());
-            boolean isMinecraft = advancement.getName().b().equals(Key.MINECRAFT_NAMESPACE);
-            return new AdvancementData(title, description, item, advancementType, isMinecraft);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public Advancement getBukkitAdvancementFromEvent(Event event) {
-        return ((PlayerAdvancementDoneEvent) event).getAdvancement();
-    }
-
-    @Override
     public boolean matchArmorSlot(ItemStack armorItem, EquipmentSlot slot) {
         net.minecraft.server.v1_12_R1.ItemStack nmsItemStack = CraftItemStack.asNMSCopy(armorItem);
         Item item = nmsItemStack.getItem();
@@ -440,13 +413,6 @@ public class V1_12 extends NMSAddonWrapper {
             }
         }
         return result;
-    }
-
-    @Override
-    public Component getDeathMessage(Player player) {
-        EntityPlayer entityPlayer = ((CraftPlayer) player).getHandle();
-        CombatTracker combatTracker = entityPlayer.getCombatTracker();
-        return InteractiveChatComponentSerializer.gson().deserialize(IChatBaseComponent.ChatSerializer.a(combatTracker.getDeathMessage()));
     }
 
     @Override

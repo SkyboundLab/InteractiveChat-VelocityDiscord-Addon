@@ -31,8 +31,6 @@ import com.loohp.interactivechat.libs.org.apache.commons.text.WordUtils;
 import com.loohp.interactivechat.nms.NMS;
 import com.loohp.interactivechat.objectholders.ICMaterial;
 import com.loohp.interactivechat.utils.InteractiveChatComponentSerializer;
-import com.loohp.interactivechatdiscordsrvaddon.objectholders.AdvancementData;
-import com.loohp.interactivechatdiscordsrvaddon.objectholders.AdvancementType;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.AttributeBase;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.BiomePrecipitation;
 import com.loohp.interactivechatdiscordsrvaddon.objectholders.CustomModelData;
@@ -345,22 +343,6 @@ public class V1_8 extends NMSAddonWrapper {
     }
 
     @Override
-    public AdvancementData getAdvancementDataFromBukkitAdvancement(Object bukkitAdvancement) {
-        net.minecraft.server.v1_8_R1.Achievement achievement = CraftStatistic.getNMSAchievement((Achievement) bukkitAdvancement);
-        String name = achievement.name;
-        Component title = Component.translatable(name).color(NamedTextColor.GREEN);
-        Component description = Component.translatable(name + ".desc");
-        ItemStack item = CraftItemStack.asBukkitCopy(achievement.d);
-        AdvancementType advancementType = AdvancementType.LEGACY;
-        return new AdvancementData(title, description, item, AdvancementType.LEGACY, true);
-    }
-
-    @Override
-    public Achievement getBukkitAdvancementFromEvent(Event event) {
-        return ((PlayerAchievementAwardedEvent) event).getAchievement();
-    }
-
-    @Override
     public boolean matchArmorSlot(ItemStack armorItem, EquipmentSlot slot) {
         net.minecraft.server.v1_8_R1.ItemStack nmsItemStack = CraftItemStack.asNMSCopy(armorItem);
         Item item = nmsItemStack.getItem();
@@ -389,13 +371,6 @@ public class V1_8 extends NMSAddonWrapper {
     @Override
     public Map<EquipmentSlotGroup, ? extends Multimap<AttributeBase, ?>> getItemAttributeModifiers(ItemStack itemStack) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Component getDeathMessage(Player player) {
-        EntityPlayer entityPlayer = ((CraftPlayer) player).getHandle();
-        CombatTracker combatTracker = entityPlayer.combatTracker;
-        return InteractiveChatComponentSerializer.gson().deserialize(ChatSerializer.a(combatTracker.b()));
     }
 
     @Override
